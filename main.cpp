@@ -1,4 +1,5 @@
 #include "includes.h"
+#include "settings.h"
 #include "variable.h"
 #include "reader.h"
 #include "sat_class.h"
@@ -11,10 +12,27 @@
 
 */
 
+
+double count_crh(SATclass& instance) {
+    double result = 0;
+    for(auto clause_hash: instance.reducted_clauses) {
+        if(instance.formula.find(clause_hash) != instance.formula.end()) {
+            result += powers[instance.get_clause_size(clause_hash)];
+        } else {
+            result += 1; // binary clause;
+        }
+        
+    }
+    return result;
+}
+
+
 double decision_heuristic(SATclass& instance, SATclass& true_instace, SATclass& false_instance) {
-    int number_of_binary = true_instace.number_of_all_clauses - true_instace.satisfied_clauses.size() - true_instace.formula.size();
-    int number_of_binary_f = false_instance.number_of_all_clauses - false_instance.satisfied_clauses.size() - false_instance.formula.size();
-    return number_of_binary*number_of_binary_f;
+    #if DIFF_HEURISTIC == 0
+    return count_crh(true_instace)*count_crh(false_instance);
+    #elif DIFF_HEURISTIC == 1
+    return count_wbh(true_instace)*count_wbh(false_instance);
+    #endif
 }
 
 

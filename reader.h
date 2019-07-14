@@ -1,6 +1,8 @@
 #ifndef READER_H
 #define READER_H
 
+std::unordered_map<int, double> powers = std::unordered_map<int, double>();
+
 void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::unordered_map<int, Variable>& variables,
                 std::unordered_set<int>& unsigned_variables, std::unordered_map<int, PairsSet>& binary_clauses, int& number_of_clauses);
 
@@ -14,6 +16,18 @@ void prepare_variables(int number, std::unordered_map<int, Variable>& variables,
         binary_clauses[i] = {};
         binary_clauses[-1*i] = {};
         unsigned_variables.insert(i);
+    }
+}
+
+void fill_power_arrays_for_heustics(int max_size) {
+
+    powers[1] = 1;
+    powers[2] = 1;
+    powers[4] = 0.05;
+    powers[5] = 0.01;
+    powers[6] = 0.003;
+    for(int i=7; i<=max_size; i++) {
+        powers[i] = 20.4514*pow(0.218673, i);
     }
 }
 
@@ -35,6 +49,7 @@ void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::
     int variables_number = std::stoi(*(info.end() - 2));
     number_of_clauses = std::stoi(*(info.end() - 1));
     prepare_variables(variables_number, variables, unsigned_variables, binary_clauses);
+    int max_clause_size = 0;
     for(int i=0; i<number_of_clauses; i++) {
         std::string input;
         std::getline(std::cin, input);
@@ -51,6 +66,10 @@ void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::
             clause_size++;
         }
 
+        if(clause_size > max_clause_size) {
+            max_clause_size = clause_size;
+        }
+
         if(clause_size == 2) { // binary clause
             auto it = clause.begin();
             auto first_literal = *it; it++;
@@ -65,6 +84,8 @@ void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::
             }
         }
     }
+
+    fill_power_arrays_for_heustics(max_clause_size);
 
 }
 

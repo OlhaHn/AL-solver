@@ -7,7 +7,9 @@ public:
     std::unordered_map<int, Variable> variables;
     std::unordered_map<int, std::unordered_set<int>> formula;
     std::unordered_map<int, PairsSet> binary_clauses;
+    std::unordered_map<int, double> literal_weights;
     std::unordered_set<int> satisfied_clauses;
+    std::unordered_set<int> reducted_clauses; //reducted clauses after propagation
     int number_of_all_clauses;
 
 
@@ -17,6 +19,7 @@ public:
             unsigned_variables(unsigned_variables), variables(variables), formula(formula), binary_clauses(binary_clauses),
             number_of_all_clauses(number_of_all_clauses) {
         satisfied_clauses = {};
+        literal_weights = {};
     }
     // Copy constructor
     SATclass(const SATclass &p2) {
@@ -25,7 +28,9 @@ public:
         unsigned_variables = p2.unsigned_variables;
         formula = p2.formula;
         binary_clauses = p2.binary_clauses;
+        reducted_clauses = p2.reducted_clauses;
         satisfied_clauses = p2.satisfied_clauses;
+        literal_weights = p2.literal_weights;
     }
 
     // Copy assignment operator
@@ -36,12 +41,18 @@ public:
         formula = p2.formula;
         binary_clauses = p2.binary_clauses;
         satisfied_clauses = p2.satisfied_clauses;
+        reducted_clauses = p2.reducted_clauses;
         number_of_all_clauses = p2.number_of_all_clauses;
+        literal_weights = p2.literal_weights;
         return *this;
     }
 
     bool is_satisfied() {
         return number_of_all_clauses == satisfied_clauses.size();
+    }
+
+    int get_clause_size(int clause_hash) {
+        return formula[clause_hash].size();
     }
 
     int get_satified_literal(std::pair<int, int> new_value) {
@@ -66,7 +77,14 @@ public:
             variables[abs(literal)].clauses.erase(clause_hash);
         }
         formula.erase(clause_hash);
+        remove_from_reducted_if_there(clause_hash);
         satisfied_clauses.insert(clause_hash);
+    }
+
+    void remove_from_reducted_if_there(int clause_hash) {
+        if(reducted_clauses.find(clause_hash) != reducted_clauses.end()) {
+            reducted_clauses.erase(clause_hash);
+        }
     }
 
     void prepare_new_binary_clause(int clause_hash) {
@@ -85,6 +103,7 @@ public:
     void prepare_binary_satisfied_clauses(int literal) {
         for(auto i: binary_clauses[literal]) {
             satisfied_clauses.insert(i.second);
+            remove_from_reducted_if_there(i.second);
         }
     }
 
@@ -110,6 +129,7 @@ public:
 
     bool propagation(int variable, bool value) {
         auto assigned_variables = std::stack<std::pair<int, bool>>();
+        reducted_clauses = {};
         assigned_variables.push(std::make_pair(variable, value));
         variables[variable].value = value;
         while(!assigned_variables.empty()) {
@@ -120,13 +140,14 @@ public:
 
             auto newly_satisfied_clauses = std::vector<int>();
             auto newly_created_binary_clauses = std::vector<int>();
-            
+
             for(auto clause_hash: variables[var.first].clauses) {
                 if( is_clause_satisfied(clause_hash, var.first, var.second) ) {
                     newly_satisfied_clauses.push_back(clause_hash);
                 } else {
                     // clause was reducted
                     auto literal = var.second ? -1*var.first : var.first;
+                    reducted_clauses.insert(clause_hash);
                     formula[clause_hash].erase(literal);
                     if(formula[clause_hash].size() == 2) {
                         newly_created_binary_clauses.push_back(clause_hash);

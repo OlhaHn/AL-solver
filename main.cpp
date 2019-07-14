@@ -10,11 +10,46 @@
     > 0 -> decision varible
 
 */
+
+double decision_heuristic(SATclass& instance, SATclass& true_instace, SATclass& false_instance) {
+    int number_of_binary = true_instace.number_of_all_clauses - true_instace.satisfied_clauses.size() - true_instace.formula.size();
+    int number_of_binary_f = false_instance.number_of_all_clauses - false_instance.satisfied_clauses.size() - false_instance.formula.size();
+    return number_of_binary*number_of_binary_f;
+}
+
+
 int look_ahead(SATclass& instance) {
-    if(instance.unsigned_variables.size() == 0) {
+    auto preselect = instance.unsigned_variables;
+    int selected_var = -1;
+    double decision_heuristic_value = -100;
+    for(auto i: preselect) {
+        if(instance.variables[i].value == -1) {
+
+            auto result_of_true_instance = instance;
+            auto result_of_false_instance = instance;
+
+            bool true_propagation = result_of_true_instance.propagation(i, 1);
+            bool false_propagation = result_of_false_instance.propagation(i, 0);
+            if(!true_propagation && !false_propagation) {
+                return 0;
+            } else if(!true_propagation) {
+                instance = result_of_false_instance;
+            } else if(!false_propagation) {
+                instance = result_of_true_instance;
+            } else {
+                auto new_decision = decision_heuristic(instance, result_of_true_instance, result_of_false_instance);
+                if(new_decision > decision_heuristic_value) {
+                    decision_heuristic_value = new_decision;
+                    selected_var = i;
+                }
+            }
+        }
+    }
+
+    if(selected_var > 0 && instance.variables[selected_var].value != -1) {
         return -1;
     }
-    return *instance.unsigned_variables.begin();
+    return selected_var;
 }
 
 

@@ -72,12 +72,12 @@ public:
 
     void prepare_satisfied_clause(int clause_hash) {
         auto& clause = formula[clause_hash];
-        #if DIFF_HEURISTIC == 1
+        #if DIFF_HEURISTIC >= 1
         double coeff = powers[clause.size()];
         #endif
         for(auto literal: clause) {
             variables[abs(literal)].clauses.erase(clause_hash);
-            #if DIFF_HEURISTIC == 1
+            #if DIFF_HEURISTIC >= 1
             literal_weights[literal] -= coeff;
             #endif
         }
@@ -106,7 +106,7 @@ public:
 
     void prepare_binary_satisfied_clauses(int literal) {
 
-        #if DIFF_HEURISTIC == 1
+        #if DIFF_HEURISTIC >= 1
         double coeff = powers[2];
         literal_weights[literal] -= coeff*binary_clauses[literal].size();
         #endif
@@ -116,7 +116,7 @@ public:
             formula.erase(i.second);
             remove_from_reducted_if_there(i.second);
 
-            #if DIFF_HEURISTIC == 1
+            #if DIFF_HEURISTIC >= 1
             literal_weights[i.first] -= coeff;
             #endif
         }

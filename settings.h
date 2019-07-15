@@ -4,7 +4,7 @@
 #endif //SETTINGS_H
 
 #ifndef DIFF_HEURISTIC
-#define DIFF_HEURISTIC 1
+#define DIFF_HEURISTIC 3
 
 /*
     Possible values: 

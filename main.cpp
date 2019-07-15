@@ -65,6 +65,30 @@ double count_bsh(SATclass& instance, SATclass& new_instace) {
     return bsh;
 }
 
+double count_bsrh(SATclass& instance, SATclass& new_instace) {
+    recount_weights(instance, new_instace);
+    
+    double total_size = 0;
+    double coeff_sum = 0;
+    for(auto i: new_instace.reducted_clauses) {
+        for(auto literal: new_instace.formula[i]) {
+            coeff_sum += new_instace.literal_weights[-1*literal];
+        }
+        total_size += new_instace.formula[i].size();
+    }
+    double normalization = coeff_sum/total_size;
+    double bsrh = 0;
+    for(auto i: new_instace.reducted_clauses) {
+        auto& clause = new_instace.formula[i];
+        double temp_res = powers[clause.size()];
+        for(auto literal: clause) {
+            temp_res *= new_instace.literal_weights[-1*literal]/normalization;
+        }
+        bsrh += temp_res;
+    }
+    return bsrh;
+}
+
 
 double decision_heuristic(SATclass& instance, SATclass& true_instace, SATclass& false_instance) {
     #if DIFF_HEURISTIC == 0
@@ -73,6 +97,8 @@ double decision_heuristic(SATclass& instance, SATclass& true_instace, SATclass& 
     return count_wbh(instance, true_instace)*count_wbh(instance, false_instance);
     #elif DIFF_HEURISTIC == 2
     return count_bsh(instance, true_instace)*count_bsh(instance, false_instance);
+    #elif DIFF_HEURISTIC == 3
+    return count_bsrh(instance, true_instace)*count_bsrh(instance, false_instance);
     #endif
 }
 

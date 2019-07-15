@@ -16,8 +16,8 @@
 
 #endif // DIFF_HEURISTIC
 
-#ifndef DIRECTION_HEURISTIC
-#define DIRECTION_HEURISTIC 0
+#ifndef DIRECTION_HEURISTI
+#define DIRECTION_HEURISTIC 3
 
 /*
     Possible values: 

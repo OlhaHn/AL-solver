@@ -11,7 +11,8 @@
     > 0 -> decision varible
 
 */
-
+bool last_decision_true_is_better = false;
+bool march_true_is_better = false;
 
 double count_crh(SATclass& instance) {
     double result = 0;
@@ -92,14 +93,20 @@ double count_bsrh(SATclass& instance, SATclass& new_instace) {
 
 double decision_heuristic(SATclass& instance, SATclass& true_instace, SATclass& false_instance) {
     #if DIFF_HEURISTIC == 0
-    return count_crh(true_instace)*count_crh(false_instance);
+    auto function_pointer = count_crh;
     #elif DIFF_HEURISTIC == 1
-    return count_wbh(instance, true_instace)*count_wbh(instance, false_instance);
+    auto function_pointer = count_wbh;
     #elif DIFF_HEURISTIC == 2
-    return count_bsh(instance, true_instace)*count_bsh(instance, false_instance);
+    auto function_pointer = count_bsh;
     #elif DIFF_HEURISTIC == 3
-    return count_bsrh(instance, true_instace)*count_bsrh(instance, false_instance);
+    auto function_pointer = count_bsrh;
     #endif
+    double true_result = function_pointer(true_instace);
+    double false_result = function_pointer(false_instance);
+    #if DIRECTION_HEURISTIC == 1
+    last_decision_true_is_better = true_result > false_result;
+    #endif
+    return true_result*false_result;
 }
 
 
@@ -107,9 +114,23 @@ bool kcnfs_direction(SATclass& instance, int decision_variable) {
     return instance.literal_count[decision_variable] > instance.literal_count[-1*decision_variable];
 }
 
+bool march_direction() {
+    return !march_true_is_better;
+}
+
+bool posit_direction(SATclass& instance, int decision_variable) {
+    return instance.literal_weights[decision_variable] < instance.literal_weights[-1*decision_variable];
+}
+
 bool get_direction_heuristic_val(SATclass& instance, int decision_variable) {
     #if DIRECTION_HEURISTIC == 0
     return kcnfs_direction(instance, decision_variable);
+    #elif DIRECTION_HEURISTIC == 1
+    return march_direction();
+    #elif DIRECTION_HEURISTIC == 2
+    return posit_direction(instance, decision_variable);
+    #elif DIRECTION_HEURISTIC == 3
+    return true;
     #endif
 }
 
@@ -136,6 +157,9 @@ int look_ahead(SATclass& instance) {
                 if(new_decision > decision_heuristic_value) {
                     decision_heuristic_value = new_decision;
                     selected_var = i;
+                    #if DIRECTION_HEURISTIC == 1
+                        march_true_is_better = last_decision_true_is_better;
+                    #endif
                 }
             }
         }

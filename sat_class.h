@@ -127,7 +127,7 @@ public:
             int literal = i.first;
             auto variable_value = variables[abs(literal)].value;
             if(variable_value > -1) {
-                if(!(literal < 0 && !variable_value) || (literal > 0 && variable_value)) { // if not satisfied
+                if(!((literal < 0 && !variable_value) || (literal > 0 && variable_value))) { // is satisfied
                     return false;
                 }
                 // Already has value

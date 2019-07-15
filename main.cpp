@@ -26,12 +26,36 @@ double count_crh(SATclass& instance) {
     return result;
 }
 
+void recount_weights(SATclass& instance, SATclass& new_instace) {
+    for(auto hash: new_instace.reducted_clauses) {
+        double new_coeff = powers[new_instace.get_clause_size(hash)];
+        double old_coeff = powers[instance.get_clause_size(hash)];
+        double update = new_coeff - old_coeff;
+        for(auto literal: new_instace.formula[hash]) {
+            new_instace.literal_weights[literal] += update;
+        }
+    }
+}
+
+double count_wbh(SATclass& instance, SATclass& new_instace) {
+    recount_weights(instance, new_instace);
+    double wbh = 0;
+    for(auto i: new_instace.reducted_clauses) {
+        if(new_instace.get_clause_size(i) == 2) {
+            for(auto literal: new_instace.formula[i]) {
+                wbh += new_instace.literal_weights[-1*literal];
+            }
+        }
+    }
+    return wbh;
+}
+
 
 double decision_heuristic(SATclass& instance, SATclass& true_instace, SATclass& false_instance) {
     #if DIFF_HEURISTIC == 0
     return count_crh(true_instace)*count_crh(false_instance);
     #elif DIFF_HEURISTIC == 1
-    return count_wbh(true_instace)*count_wbh(false_instance);
+    return count_wbh(instance, true_instace)*count_wbh(instance, false_instance);
     #endif
 }
 
@@ -102,10 +126,11 @@ int main() {
     auto variables = std::unordered_map<int, Variable>();
     auto unasigned_variables = std::unordered_set<int>();
     auto binary_clauses = std::unordered_map<int, PairsSet>();
+    auto literal_wieghts = std::unordered_map<int, double>();
     int number_of_clauses = 0;
 
-    read_input(formula, variables, unasigned_variables, binary_clauses, number_of_clauses);
-    auto sat_instance = SATclass(unasigned_variables, variables, formula, binary_clauses, number_of_clauses);
+    read_input(formula, variables, unasigned_variables, binary_clauses, number_of_clauses, literal_wieghts);
+    auto sat_instance = SATclass(unasigned_variables, variables, formula, binary_clauses, number_of_clauses, literal_wieghts);
     auto result = dpll(sat_instance);
     std::cout << "Result: " << result << '\n';
 

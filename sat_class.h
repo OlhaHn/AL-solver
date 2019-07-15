@@ -15,11 +15,10 @@ public:
 
     SATclass(std::unordered_set<int>& unsigned_variables, std::unordered_map<int, Variable>& variables,
              std::unordered_map<int, std::unordered_set<int>>& formula, std::unordered_map<int, PairsSet>& binary_clauses,
-             int number_of_all_clauses) :
+             int number_of_all_clauses, std::unordered_map<int, double>& literal_weights ) :
             unsigned_variables(unsigned_variables), variables(variables), formula(formula), binary_clauses(binary_clauses),
-            number_of_all_clauses(number_of_all_clauses) {
+            number_of_all_clauses(number_of_all_clauses), literal_weights(literal_weights) {
         satisfied_clauses = {};
-        literal_weights = {};
     }
     // Copy constructor
     SATclass(const SATclass &p2) {
@@ -73,8 +72,14 @@ public:
 
     void prepare_satisfied_clause(int clause_hash) {
         auto& clause = formula[clause_hash];
+        #if DIFF_HEURISTIC == 1
+        double coeff = powers[clause.size()];
+        #endif
         for(auto literal: clause) {
             variables[abs(literal)].clauses.erase(clause_hash);
+            #if DIFF_HEURISTIC == 1
+            literal_weights[literal] -= coeff;
+            #endif
         }
         formula.erase(clause_hash);
         remove_from_reducted_if_there(clause_hash);
@@ -100,10 +105,20 @@ public:
     }
 
     void prepare_binary_satisfied_clauses(int literal) {
+
+        #if DIFF_HEURISTIC == 1
+        double coeff = powers[2];
+        literal_weights[literal] -= coeff*binary_clauses[literal].size();
+        #endif
+
         for(auto i: binary_clauses[literal]) {
             satisfied_clauses.insert(i.second);
             formula.erase(i.second);
             remove_from_reducted_if_there(i.second);
+
+            #if DIFF_HEURISTIC == 1
+            literal_weights[i.first] -= coeff;
+            #endif
         }
     }
 
@@ -112,10 +127,7 @@ public:
             int literal = i.first;
             auto variable_value = variables[abs(literal)].value;
             if(variable_value > -1) {
-                if((literal < 0 && !variable_value) || (literal > 0 && variable_value)) { // is satisfied
-                    satisfied_clauses.insert(i.second);
-                    formula.erase(i.second);
-                } else {
+                if(!(literal < 0 && !variable_value) || (literal > 0 && variable_value)) { // if not satisfied
                     return false;
                 }
                 // Already has value

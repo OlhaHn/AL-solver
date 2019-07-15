@@ -29,7 +29,7 @@
 #endif // DECISION_HEURISTIC
 
 #ifndef PRESELECT_HEURISTIC
-#define PRESELECT_HEURISTIC 0
+#define PRESELECT_HEURISTIC 1
 
 /*
     Possible values: 

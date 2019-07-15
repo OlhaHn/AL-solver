@@ -135,7 +135,11 @@ bool get_direction_heuristic_val(SATclass& instance, int decision_variable) {
 }
 
 int look_ahead(SATclass& instance) {
+    #if PRESELECT_HEURISTIC == 0
     auto preselect = instance.preselect_propz();
+    #else
+    auto preselect = instance.preselect_cra();
+    #endif
     int selected_var = -1;
     double decision_heuristic_value = -100;
     for(auto i: preselect) {

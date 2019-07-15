@@ -72,6 +72,44 @@ public:
         return result_set;
     }
 
+    std::unordered_set<int> preselect_cra() {
+        if(unsigned_variables.size() < 20) {
+            return unsigned_variables;
+        }
+        auto cra_map = std::unordered_map<int, int>();
+
+        int unsigned_varialbes_count = unsigned_variables.size();
+        for(auto var: unsigned_variables) {
+
+            int positive_sum = 0;
+            int negative_sum = 0;
+            for(auto i: binary_clauses[var]) {
+                positive_sum += literal_count[-1*i.first] - binary_clauses[-1*i.first].size();
+            }
+            for(auto i: binary_clauses[-1*var]) {
+                negative_sum += literal_count[-1*i.first] - binary_clauses[-1*i.first].size();
+            }
+
+            cra_map[var] = positive_sum*negative_sum;
+        }
+
+        auto size = std::max(20, unsigned_varialbes_count/10);
+        std::vector<std::pair<int, int>> top(size);
+        auto result_set = std::unordered_set<int>();
+        std::partial_sort_copy(cra_map.begin(),
+                            cra_map.end(),
+                            top.begin(),
+                            top.end(),
+                            [](std::pair<int, int> const& l,
+                                std::pair<int, int> const& r)
+                            {
+                                return l.second > r.second;
+                            });
+        std::transform(top.begin(), top.end(), std::inserter(result_set, result_set.begin()),
+                   [](std::pair<int, int> c) { return c.first; });
+        return result_set;
+    }
+
     bool is_satisfied() {
         return number_of_all_clauses == satisfied_clauses.size();
     }

@@ -135,7 +135,7 @@ bool get_direction_heuristic_val(SATclass& instance, int decision_variable) {
 }
 
 int look_ahead(SATclass& instance) {
-    auto preselect = instance.unsigned_variables;
+    auto preselect = instance.preselect_propz();
     int selected_var = -1;
     double decision_heuristic_value = -100;
     for(auto i: preselect) {
@@ -173,6 +173,7 @@ int look_ahead(SATclass& instance) {
 
 
 bool dpll(SATclass instance) {
+    instance.decision_level += 1;
     if (instance.is_satisfied()) {
         return true;
     } else {

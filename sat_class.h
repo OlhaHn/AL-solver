@@ -12,6 +12,7 @@ public:
     std::unordered_map<int, int> literal_count;
     std::unordered_set<int> reducted_clauses; //reducted clauses after propagation
     int number_of_all_clauses;
+    int decision_level;
 
 
     SATclass(std::unordered_set<int>& unsigned_variables, std::unordered_map<int, Variable>& variables,
@@ -19,7 +20,7 @@ public:
              int number_of_all_clauses, std::unordered_map<int, double>& literal_weights, std::unordered_map<int, int>& literal_count ) :
             unsigned_variables(unsigned_variables), variables(variables), formula(formula), binary_clauses(binary_clauses),
             number_of_all_clauses(number_of_all_clauses), literal_weights(literal_weights),
-            literal_count(literal_count) {
+            literal_count(literal_count), decision_level(0) {
         satisfied_clauses = {};
     }
     // Copy constructor
@@ -33,6 +34,7 @@ public:
         satisfied_clauses = p2.satisfied_clauses;
         literal_weights = p2.literal_weights;
         literal_count = p2.literal_count;
+        decision_level = p2.decision_level;
     }
 
     // Copy assignment operator
@@ -47,7 +49,27 @@ public:
         number_of_all_clauses = p2.number_of_all_clauses;
         literal_weights = p2.literal_weights;
         literal_count = p2.literal_count;
+        decision_level = p2.decision_level;
         return *this;
+    }
+
+    std::unordered_set<int> preselect_propz() {
+        if(decision_level < 5 || unsigned_variables.size() <= 10) {
+            return unsigned_variables;
+        }
+
+        auto result_set = std::unordered_set<int>();
+        for(auto var: unsigned_variables) {
+            if(binary_clauses[var].size() > 0 && binary_clauses[-1*var].size() > 0) {
+                result_set.insert(var);
+            }
+        }
+        auto it = unsigned_variables.begin();
+        while(result_set.size() < 10 && it != unsigned_variables.end()) {
+            result_set.insert(*it);
+            it++;
+        }
+        return result_set;
     }
 
     bool is_satisfied() {
@@ -181,7 +203,7 @@ public:
                     #if DIRECTION_HEURISTIC == 0
                     literal_count[literal] -= 1;
                     #endif
-                    
+
                     if(formula[clause_hash].size() == 2) {
                         newly_created_binary_clauses.push_back(clause_hash);
                     }

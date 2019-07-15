@@ -4,7 +4,7 @@
 #endif //SETTINGS_H
 
 #ifndef DIFF_HEURISTIC
-#define DIFF_HEURISTIC 3
+#define DIFF_HEURISTIC 0
 
 /*
     Possible values: 
@@ -16,8 +16,8 @@
 
 #endif // DIFF_HEURISTIC
 
-#ifndef DECISION_HEURISTIC
-#define DECISION_HEURISTIC 2
+#ifndef DIRECTION_HEURISTIC
+#define DIRECTION_HEURISTIC 0
 
 /*
     Possible values: 

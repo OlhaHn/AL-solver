@@ -103,6 +103,16 @@ double decision_heuristic(SATclass& instance, SATclass& true_instace, SATclass& 
 }
 
 
+bool kcnfs_direction(SATclass& instance, int decision_variable) {
+    return instance.literal_count[decision_variable] > instance.literal_count[-1*decision_variable];
+}
+
+bool get_direction_heuristic_val(SATclass& instance, int decision_variable) {
+    #if DIRECTION_HEURISTIC == 0
+    return kcnfs_direction(instance, decision_variable);
+    #endif
+}
+
 int look_ahead(SATclass& instance) {
     auto preselect = instance.unsigned_variables;
     int selected_var = -1;
@@ -149,11 +159,12 @@ bool dpll(SATclass instance) {
             return dpll(instance);
         } else {
             auto instance_copy = instance;
-            bool propagarion_res = instance.propagation(decision_variable, 0);
+            bool value = get_direction_heuristic_val(instance, decision_variable);
+            bool propagarion_res = instance.propagation(decision_variable, value);
             if(propagarion_res && dpll(instance)) {
                 return true;
             } else {
-                propagarion_res = instance_copy.propagation(decision_variable, 1);
+                propagarion_res = instance_copy.propagation(decision_variable, !value);
                 return propagarion_res && dpll(instance_copy);
             }
         }
@@ -170,10 +181,11 @@ int main() {
     auto unasigned_variables = std::unordered_set<int>();
     auto binary_clauses = std::unordered_map<int, PairsSet>();
     auto literal_wieghts = std::unordered_map<int, double>();
+    auto literal_count = std::unordered_map<int, int>(); 
     int number_of_clauses = 0;
 
-    read_input(formula, variables, unasigned_variables, binary_clauses, number_of_clauses, literal_wieghts);
-    auto sat_instance = SATclass(unasigned_variables, variables, formula, binary_clauses, number_of_clauses, literal_wieghts);
+    read_input(formula, variables, unasigned_variables, binary_clauses, number_of_clauses, literal_wieghts, literal_count);
+    auto sat_instance = SATclass(unasigned_variables, variables, formula, binary_clauses, number_of_clauses, literal_wieghts, literal_count);
     auto result = dpll(sat_instance);
     std::cout << "Result: " << result << '\n';
 

@@ -9,15 +9,17 @@ public:
     std::unordered_map<int, PairsSet> binary_clauses;
     std::unordered_map<int, double> literal_weights;
     std::unordered_set<int> satisfied_clauses;
+    std::unordered_map<int, int> literal_count;
     std::unordered_set<int> reducted_clauses; //reducted clauses after propagation
     int number_of_all_clauses;
 
 
     SATclass(std::unordered_set<int>& unsigned_variables, std::unordered_map<int, Variable>& variables,
              std::unordered_map<int, std::unordered_set<int>>& formula, std::unordered_map<int, PairsSet>& binary_clauses,
-             int number_of_all_clauses, std::unordered_map<int, double>& literal_weights ) :
+             int number_of_all_clauses, std::unordered_map<int, double>& literal_weights, std::unordered_map<int, int>& literal_count ) :
             unsigned_variables(unsigned_variables), variables(variables), formula(formula), binary_clauses(binary_clauses),
-            number_of_all_clauses(number_of_all_clauses), literal_weights(literal_weights) {
+            number_of_all_clauses(number_of_all_clauses), literal_weights(literal_weights),
+            literal_count(literal_count) {
         satisfied_clauses = {};
     }
     // Copy constructor
@@ -30,6 +32,7 @@ public:
         reducted_clauses = p2.reducted_clauses;
         satisfied_clauses = p2.satisfied_clauses;
         literal_weights = p2.literal_weights;
+        literal_count = p2.literal_count;
     }
 
     // Copy assignment operator
@@ -43,6 +46,7 @@ public:
         reducted_clauses = p2.reducted_clauses;
         number_of_all_clauses = p2.number_of_all_clauses;
         literal_weights = p2.literal_weights;
+        literal_count = p2.literal_count;
         return *this;
     }
 
@@ -77,6 +81,9 @@ public:
         #endif
         for(auto literal: clause) {
             variables[abs(literal)].clauses.erase(clause_hash);
+            #if DIRECTION_HEURISTIC == 0
+            literal_count[literal] -= 1;
+            #endif
             #if DIFF_HEURISTIC >= 1
             literal_weights[literal] -= coeff;
             #endif
@@ -111,6 +118,10 @@ public:
         literal_weights[literal] -= coeff*binary_clauses[literal].size();
         #endif
 
+        #if DIRECTION_HEURISTIC == 0
+        literal_count[literal] -= binary_clauses[literal].size();
+        #endif
+
         for(auto i: binary_clauses[literal]) {
             satisfied_clauses.insert(i.second);
             formula.erase(i.second);
@@ -118,6 +129,10 @@ public:
 
             #if DIFF_HEURISTIC >= 1
             literal_weights[i.first] -= coeff;
+            #endif
+
+            #if DIRECTION_HEURISTIC == 0
+            literal_count[literal] -= 1;
             #endif
         }
     }
@@ -162,6 +177,11 @@ public:
                     auto literal = var.second ? -1*var.first : var.first;
                     reducted_clauses.insert(clause_hash);
                     formula[clause_hash].erase(literal);
+
+                    #if DIRECTION_HEURISTIC == 0
+                    literal_count[literal] -= 1;
+                    #endif
+                    
                     if(formula[clause_hash].size() == 2) {
                         newly_created_binary_clauses.push_back(clause_hash);
                     }

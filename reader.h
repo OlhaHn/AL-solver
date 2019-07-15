@@ -5,13 +5,15 @@ std::unordered_map<int, double> powers = std::unordered_map<int, double>();
 
 void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::unordered_map<int, Variable>& variables,
                 std::unordered_set<int>& unsigned_variables, std::unordered_map<int, PairsSet>& binary_clauses, int& number_of_clauses,
-                std::unordered_map<int, double>& literal_weights);
+                std::unordered_map<int, double>& literal_weights, std::unordered_map<int, int>& literal_count);
 
 void prepare_variables(int number, std::unordered_map<int, Variable>& variables, std::unordered_set<int>& unsigned_variables,
-                       std::unordered_map<int, PairsSet>& binary_clauses, std::unordered_map<int, double>& literal_weights);
+                       std::unordered_map<int, PairsSet>& binary_clauses, std::unordered_map<int, double>& literal_weights,
+                       std::unordered_map<int, int>& literal_count);
 
 void prepare_variables(int number, std::unordered_map<int, Variable>& variables, std::unordered_set<int>& unsigned_variables,
-                       std::unordered_map<int, PairsSet>& binary_clauses, std::unordered_map<int, double>& literal_weights) {
+                       std::unordered_map<int, PairsSet>& binary_clauses, std::unordered_map<int, double>& literal_weights,
+                       std::unordered_map<int, int>& literal_count) {
     for(int i=1; i<=number; i++) {
         variables[i] = {-1, -1, {}};
         binary_clauses[i] = {};
@@ -19,6 +21,8 @@ void prepare_variables(int number, std::unordered_map<int, Variable>& variables,
         unsigned_variables.insert(i);
         literal_weights[i] = 0;
         literal_weights[-1*i] = 0;
+        literal_count[i] = 0;
+        literal_count[-1*i] = 0;
     }
 }
 
@@ -71,7 +75,7 @@ void count_weights(std::unordered_map<int, std::unordered_set<int>>& formula, st
 
 void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::unordered_map<int, Variable>& variables,
                 std::unordered_set<int>& unsigned_variables, std::unordered_map<int, PairsSet>& binary_clauses, int& number_of_clauses,
-                std::unordered_map<int, double>& literal_weights) {
+                std::unordered_map<int, double>& literal_weights, std::unordered_map<int, int>& literal_count) {
 
     std::string line;
     // skip comments
@@ -87,7 +91,7 @@ void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::
 
     int variables_number = std::stoi(*(info.end() - 2));
     number_of_clauses = std::stoi(*(info.end() - 1));
-    prepare_variables(variables_number, variables, unsigned_variables, binary_clauses, literal_weights);
+    prepare_variables(variables_number, variables, unsigned_variables, binary_clauses, literal_weights, literal_count);
     int max_clause_size = 0;
     for(int i=0; i<number_of_clauses; i++) {
         std::string input;
@@ -100,7 +104,7 @@ void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::
         stream >> n;
         int clause_size = 0;
         while(n) {
-            clause.insert(n);;
+            clause.insert(n);
             stream >> n;
             clause_size++;
         }
@@ -119,7 +123,10 @@ void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::
         } 
         formula[i] = clause;
         for(auto var: clause) {
-            variables[abs(var)].clauses.insert(i);
+            if(clause.size() != 2) {
+                variables[abs(var)].clauses.insert(i);
+            }
+            literal_count[n] += 1;
         }
     }
 

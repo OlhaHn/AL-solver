@@ -41,11 +41,21 @@ void powers_for_wbh(int max_size) {
     }
 }
 
+void powers_for_bsh(int max_size) {
+    double value = 8.0;
+    for(int i=0; i<max_size; i++) {
+        powers[i] = value;
+        value /= 2;
+    }
+}
+
 void fill_power_arrays_for_heustics(int max_size) {
     #if DIFF_HEURISTIC == 0
     powers_for_crh(max_size);
     #elif DIFF_HEURISTIC == 1
     powers_for_wbh(max_size);
+    #else
+    powers_for_bsh(max_size);
     #endif
 }
 
@@ -114,7 +124,7 @@ void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::
     }
 
     fill_power_arrays_for_heustics(max_clause_size);
-    #if DIFF_HEURISTIC == 1
+    #if DIFF_HEURISTIC >= 1
     count_weights(formula, literal_weights);
     #endif
 }

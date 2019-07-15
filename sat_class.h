@@ -97,12 +97,12 @@ public:
         for(auto literal: formula[clause_hash]) {
             variables[abs(literal)].clauses.erase(clause_hash);
         }
-        formula.erase(clause_hash);
     }
 
     void prepare_binary_satisfied_clauses(int literal) {
         for(auto i: binary_clauses[literal]) {
             satisfied_clauses.insert(i.second);
+            formula.erase(i.second);
             remove_from_reducted_if_there(i.second);
         }
     }
@@ -114,6 +114,7 @@ public:
             if(variable_value > -1) {
                 if((literal < 0 && !variable_value) || (literal > 0 && variable_value)) { // is satisfied
                     satisfied_clauses.insert(i.second);
+                    formula.erase(i.second);
                 } else {
                     return false;
                 }

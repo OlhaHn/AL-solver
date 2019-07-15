@@ -77,11 +77,10 @@ void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::
 
             binary_clauses[first_literal].insert(std::make_pair(second_literal, i));
             binary_clauses[second_literal].insert(std::make_pair(first_literal, i));
-        } else {
-            formula[i] = clause;
-            for(auto var: clause) {
-                variables[abs(var)].clauses.insert(i);
-            }
+        } 
+        formula[i] = clause;
+        for(auto var: clause) {
+            variables[abs(var)].clauses.insert(i);
         }
     }
 

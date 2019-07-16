@@ -144,6 +144,15 @@ int look_ahead(SATclass& instance) {
     double decision_heuristic_value = -100;
     for(auto i: preselect) {
         if(instance.variables[i].value == -1) {
+            #if AUTARKY_REASONING != 0
+                if(instance.literal_count[i] == 0) { // positive literal does not appear
+                    instance.propagation(i, 0);
+                    continue;
+                } else if(instance.literal_count[-1*i] == 0) { // negative literal does not apper
+                    instance.propagation(i, 1);
+                    continue;
+                }
+            #endif
 
             auto result_of_true_instance = instance;
             auto result_of_false_instance = instance;

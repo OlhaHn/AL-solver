@@ -14,6 +14,29 @@
 bool last_decision_true_is_better = false;
 bool march_true_is_better = false;
 
+int look_ahead(SATclass& instance, int depth);
+
+int double_lookahead(SATclass& instance, SATclass& old_instance) {
+    #if DOUBLE_LOOKAHEAD >= 1
+        auto binary_clauses = instance.new_binary_clauses.size();
+        //std::cout << binary_clauses << ' ' << old_instance.trigger << '\n'; 
+        if(binary_clauses >= old_instance.trigger) {
+            auto next_look_ahed_result = look_ahead(instance, 2);
+            if (next_look_ahed_result == 0) {
+                #if DOUBLE_LOOKAHEAD == 3
+                    old_instance.trigger = old_instance.start_tigger;
+                #endif
+                return 0;
+            } else {
+                #if DOUBLE_LOOKAHEAD == 3 || DOUBLE_LOOKAHEAD == 4
+                    old_instance.trigger = binary_clauses;
+                #endif
+            }
+        }
+    #endif
+    return 1;
+}
+
 double count_crh(SATclass& instance) {
     double result = 0;
     for(auto clause_hash: instance.reducted_clauses) {
@@ -134,7 +157,7 @@ bool get_direction_heuristic_val(SATclass& instance, int decision_variable) {
     #endif
 }
 
-int look_ahead(SATclass& instance) {
+int look_ahead(SATclass& instance, int depth) {
     #if PRESELECT_HEURISTIC == 0
     auto preselect = instance.preselect_propz();
     #else
@@ -163,9 +186,36 @@ int look_ahead(SATclass& instance) {
                 return 0;
             } else if(!true_propagation) {
                 instance = result_of_false_instance;
+                #if DOUBLE_LOOKAHEAD > 0
+                    if(depth == 0) {
+                        auto new_look_ahead_result = double_lookahead(instance, instance);
+                        if (new_look_ahead_result == 0) {
+                            return 0;
+                        }
+                    }
+                #endif
             } else if(!false_propagation) {
                 instance = result_of_true_instance;
+                #if DOUBLE_LOOKAHEAD > 0
+                    if(depth == 0) {
+                        auto new_look_ahead_result = double_lookahead(instance, instance);
+                        if (new_look_ahead_result == 0) {
+                            return 0;
+                        }
+                    }
+                #endif
             } else {
+
+                #if DOUBLE_LOOKAHEAD > 0
+                    if(depth == 0) {
+                        auto double_for_true = double_lookahead(result_of_true_instance, instance);
+                        auto double_for_false = double_lookahead(result_of_false_instance, instance);
+                        if(double_for_true == 0 && double_for_false == 0) {
+                            return 0;
+                        }
+                    }
+                #endif
+
                 auto new_decision = decision_heuristic(instance, result_of_true_instance, result_of_false_instance);
                 if(new_decision > decision_heuristic_value) {
                     decision_heuristic_value = new_decision;
@@ -177,6 +227,11 @@ int look_ahead(SATclass& instance) {
             }
         }
     }
+    #if DOUBLE_LOOKAHEAD == 4
+        if(instance.trigger > 0) {
+            instance.trigger--;
+        }
+    #endif
 
     if(selected_var > 0 && instance.variables[selected_var].value != -1) {
         return -1;
@@ -190,7 +245,7 @@ bool dpll(SATclass instance) {
     if (instance.is_satisfied()) {
         return true;
     } else {
-        int decision_variable = look_ahead(instance);
+        int decision_variable = look_ahead(instance, 0);
         if (decision_variable == 0) {
             return false;
         } else if (decision_variable == -1) {
@@ -224,6 +279,16 @@ int main() {
 
     read_input(formula, variables, unasigned_variables, binary_clauses, number_of_clauses, literal_wieghts, literal_count);
     auto sat_instance = SATclass(unasigned_variables, variables, formula, binary_clauses, number_of_clauses, literal_wieghts, literal_count);
+
+    #if DOUBLE_LOOKAHEAD == 1
+        sat_instance.trigger = 65;
+    #elif DOUBLE_LOOKAHEAD == 2 || DOUBLE_LOOKAHEAD == 3
+        sat_instance.trigger = 0.17*sat_instance.variables.size();
+        sat_instance.start_tigger = 0.17*sat_instance.variables.size();
+    #elif DOUBLE_LOOKAHEAD == 4
+        sat_instance.trigger = 0;
+    #endif
+
     auto result = dpll(sat_instance);
     std::cout << "Result: " << result << '\n';
 

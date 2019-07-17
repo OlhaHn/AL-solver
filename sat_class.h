@@ -11,8 +11,11 @@ public:
     std::unordered_set<int> satisfied_clauses;
     std::unordered_map<int, int> literal_count;
     std::unordered_set<int> reducted_clauses; //reducted clauses after propagation
+    std::unordered_set<int> new_binary_clauses;
     int number_of_all_clauses;
     int decision_level;
+    double trigger;
+    double start_tigger;
 
 
     SATclass(std::unordered_set<int>& unsigned_variables, std::unordered_map<int, Variable>& variables,
@@ -35,6 +38,8 @@ public:
         literal_weights = p2.literal_weights;
         literal_count = p2.literal_count;
         decision_level = p2.decision_level;
+        trigger = p2.trigger;
+        start_tigger = p2.start_tigger;
     }
 
     // Copy assignment operator
@@ -50,6 +55,8 @@ public:
         literal_weights = p2.literal_weights;
         literal_count = p2.literal_count;
         decision_level = p2.decision_level;
+        trigger = p2.trigger;
+        start_tigger = p2.start_tigger;
         return *this;
     }
 
@@ -141,7 +148,7 @@ public:
         #endif
         for(auto literal: clause) {
             variables[abs(literal)].clauses.erase(clause_hash);
-            #if DIRECTION_HEURISTIC == 0
+            #if DIRECTION_HEURISTIC == 0 || AUTARKY_REASONING == 1
             literal_count[literal] -= 1;
             #endif
             #if DIFF_HEURISTIC >= 1
@@ -156,6 +163,9 @@ public:
     void remove_from_reducted_if_there(int clause_hash) {
         if(reducted_clauses.find(clause_hash) != reducted_clauses.end()) {
             reducted_clauses.erase(clause_hash);
+        }
+        if(new_binary_clauses.find(clause_hash) != new_binary_clauses.end()) {
+            new_binary_clauses.erase(clause_hash);
         }
     }
 
@@ -178,7 +188,7 @@ public:
         literal_weights[literal] -= coeff*binary_clauses[literal].size();
         #endif
 
-        #if DIRECTION_HEURISTIC == 0
+        #if DIRECTION_HEURISTIC == 0 || AUTARKY_REASONING == 1
         literal_count[literal] -= binary_clauses[literal].size();
         #endif
 
@@ -191,7 +201,7 @@ public:
             literal_weights[i.first] -= coeff;
             #endif
 
-            #if DIRECTION_HEURISTIC == 0
+            #if DIRECTION_HEURISTIC == 0 || AUTARKY_REASONING == 1
             literal_count[literal] -= 1;
             #endif
         }
@@ -218,6 +228,7 @@ public:
     bool propagation(int variable, bool value) {
         auto assigned_variables = std::stack<std::pair<int, bool>>();
         reducted_clauses = {};
+        new_binary_clauses = {};
         assigned_variables.push(std::make_pair(variable, value));
         variables[variable].value = value;
         while(!assigned_variables.empty()) {
@@ -244,6 +255,7 @@ public:
 
                     if(formula[clause_hash].size() == 2) {
                         newly_created_binary_clauses.push_back(clause_hash);
+                        new_binary_clauses.insert(clause_hash);
                     }
                 }
             }

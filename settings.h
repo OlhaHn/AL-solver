@@ -51,7 +51,7 @@
 
 
 #ifndef DOUBLE_LOOKAHEAD
-#define DOUBLE_LOOKAHEAD 0
+#define DOUBLE_LOOKAHEAD 4
 /*
     possible values: 
         0 don't use double lookahead

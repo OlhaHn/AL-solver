@@ -126,7 +126,7 @@ void read_input(std::unordered_map<int, std::unordered_set<int>>& formula, std::
             if(clause.size() != 2) {
                 variables[abs(var)].clauses.insert(i);
             }
-            literal_count[n] += 1;
+            literal_count[var] += 1;
         }
     }
 

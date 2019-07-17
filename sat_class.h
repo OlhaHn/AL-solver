@@ -238,7 +238,7 @@ public:
                     reducted_clauses.insert(clause_hash);
                     formula[clause_hash].erase(literal);
 
-                    #if DIRECTION_HEURISTIC == 0
+                    #if DIRECTION_HEURISTIC == 0 || AUTARKY_REASONING == 1
                     literal_count[literal] -= 1;
                     #endif
 

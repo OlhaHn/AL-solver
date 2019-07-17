@@ -17,7 +17,7 @@
 #endif // DIFF_HEURISTIC
 
 #ifndef DIRECTION_HEURISTI
-#define DIRECTION_HEURISTIC 3
+#define DIRECTION_HEURISTIC 0
 
 /*
     Possible values: 
@@ -29,7 +29,7 @@
 #endif // DECISION_HEURISTIC
 
 #ifndef PRESELECT_HEURISTIC
-#define PRESELECT_HEURISTIC 1
+#define PRESELECT_HEURISTIC 0
 
 /*
     Possible values: 
@@ -62,3 +62,5 @@
 */
 
 #endif
+
+

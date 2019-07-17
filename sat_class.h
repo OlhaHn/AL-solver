@@ -1,12 +1,13 @@
 #ifndef SAT_CLASS_H
 #define SAT_CLASS_H
 
+#include "includes.h"
+
 class SATclass {
 public:
     std::unordered_set<int> unsigned_variables;
     std::unordered_map<int, Variable> variables;
     std::unordered_map<int, std::unordered_set<int>> formula;
-    std::unordered_map<int, PairsSet> binary_clauses;
     std::unordered_map<int, double> literal_weights;
     std::unordered_set<int> satisfied_clauses;
     std::unordered_map<int, int> literal_count;
@@ -19,9 +20,9 @@ public:
 
 
     SATclass(std::unordered_set<int>& unsigned_variables, std::unordered_map<int, Variable>& variables,
-             std::unordered_map<int, std::unordered_set<int>>& formula, std::unordered_map<int, PairsSet>& binary_clauses,
+             std::unordered_map<int, std::unordered_set<int>>& formula,
              int number_of_all_clauses, std::unordered_map<int, double>& literal_weights, std::unordered_map<int, int>& literal_count ) :
-            unsigned_variables(unsigned_variables), variables(variables), formula(formula), binary_clauses(binary_clauses),
+            unsigned_variables(unsigned_variables), variables(variables), formula(formula),
             number_of_all_clauses(number_of_all_clauses), literal_weights(literal_weights),
             literal_count(literal_count), decision_level(0) {
         satisfied_clauses = {};
@@ -32,7 +33,6 @@ public:
         variables = p2.variables;
         unsigned_variables = p2.unsigned_variables;
         formula = p2.formula;
-        binary_clauses = p2.binary_clauses;
         reducted_clauses = p2.reducted_clauses;
         satisfied_clauses = p2.satisfied_clauses;
         literal_weights = p2.literal_weights;
@@ -48,7 +48,6 @@ public:
         variables = p2.variables;
         unsigned_variables = p2.unsigned_variables;
         formula = p2.formula;
-        binary_clauses = p2.binary_clauses;
         satisfied_clauses = p2.satisfied_clauses;
         reducted_clauses = p2.reducted_clauses;
         number_of_all_clauses = p2.number_of_all_clauses;
@@ -67,12 +66,24 @@ public:
 
         auto result_set = std::unordered_set<int>();
         for(auto var: unsigned_variables) {
-            if(binary_clauses[var].size() > 0 && binary_clauses[-1*var].size() > 0) {
-                result_set.insert(var);
+            bool was_positive = false;
+            bool was_negative = false;
+            for(auto clause_hash: variables[var].clauses) {
+                auto& clause = formula[clause_hash];
+                if(clause.find(var) != clause.end()) {
+                    was_positive = true;
+                } 
+                if(clause.find(-1*var) != clause.end()) {
+                    was_negative = true;
+                }
+                if(was_negative && was_positive) {
+                    result_set.insert(var);
+                    break;
+                }
             }
         }
         auto it = unsigned_variables.begin();
-        while(result_set.size() < 10 && it != unsigned_variables.end()) {
+        while (result_set.size() < 10 && it != unsigned_variables.end()) {
             result_set.insert(*it);
             it++;
         }
@@ -90,11 +101,32 @@ public:
 
             int positive_sum = 0;
             int negative_sum = 0;
-            for(auto i: binary_clauses[var]) {
-                positive_sum += literal_count[-1*i.first] - binary_clauses[-1*i.first].size();
-            }
-            for(auto i: binary_clauses[-1*var]) {
-                negative_sum += literal_count[-1*i.first] - binary_clauses[-1*i.first].size();
+
+            std::unordered_map<int, int> literal_number_of_binary_clauses = {};
+            for(auto clause_hash: variables[var].clauses) {
+                auto& clause = formula[clause_hash];
+                if(clause.size() == 2) {
+                    auto it = clause.begin(); 
+                    if(abs(*it) == var) {
+                        it++;
+                    }
+                    auto next_literal = *it;
+                    if(literal_number_of_binary_clauses.find(-1*next_literal) == literal_number_of_binary_clauses.end()) {
+                        int result = 0;
+                        for(auto i: variables[abs(next_literal)].clauses) {
+                            auto& clause_value = formula[i];
+                            if(clause_value.size() != 2 && clause.find(-1*next_literal) != clause.end()) {
+                                result ++;
+                            }
+                        }
+                        literal_number_of_binary_clauses[-1*next_literal] = result;
+                    }
+                    if(clause.find(var) != clause.end()) {
+                        positive_sum += literal_number_of_binary_clauses[-1*next_literal];
+                    } else {
+                        negative_sum += literal_number_of_binary_clauses[-1*next_literal];
+                    }
+                }
             }
 
             cra_map[var] = positive_sum*negative_sum;
@@ -169,62 +201,6 @@ public:
         }
     }
 
-    void prepare_new_binary_clause(int clause_hash) {
-        auto it = formula[clause_hash].begin();
-        auto first_literal = *it; it++;
-        auto second_literal = *it;
-
-        binary_clauses[first_literal].insert(std::make_pair(second_literal, clause_hash));
-        binary_clauses[second_literal].insert(std::make_pair(first_literal, clause_hash));
-        for(auto literal: formula[clause_hash]) {
-            variables[abs(literal)].clauses.erase(clause_hash);
-        }
-    }
-
-    void prepare_binary_satisfied_clauses(int literal) {
-
-        #if DIFF_HEURISTIC >= 1
-        double coeff = powers[2];
-        literal_weights[literal] -= coeff*binary_clauses[literal].size();
-        #endif
-
-        #if DIRECTION_HEURISTIC == 0 || AUTARKY_REASONING == 1
-        literal_count[literal] -= binary_clauses[literal].size();
-        #endif
-
-        for(auto i: binary_clauses[literal]) {
-            satisfied_clauses.insert(i.second);
-            formula.erase(i.second);
-            remove_from_reducted_if_there(i.second);
-
-            #if DIFF_HEURISTIC >= 1
-            literal_weights[i.first] -= coeff;
-            #endif
-
-            #if DIRECTION_HEURISTIC == 0 || AUTARKY_REASONING == 1
-            literal_count[literal] -= 1;
-            #endif
-        }
-    }
-
-    bool prepare_birary_reducted_clauses(int literal_to_check, std::stack<std::pair<int, bool>>& assigned_variables) {
-        for(auto i: binary_clauses[literal_to_check]) {
-            int literal = i.first;
-            auto variable_value = variables[abs(literal)].value;
-            if(variable_value > -1) {
-                if(!((literal < 0 && !variable_value) || (literal > 0 && variable_value))) { // is satisfied
-                    return false;
-                }
-                // Already has value
-            } else {
-                bool satisfying_value = literal > 0;
-                variables[abs(literal)].value = satisfying_value;
-                assigned_variables.push(std::make_pair(abs(literal), satisfying_value));
-            }
-        }
-        return true;
-    }
-
     bool propagation(int variable, bool value) {
         auto assigned_variables = std::stack<std::pair<int, bool>>();
         reducted_clauses = {};
@@ -238,7 +214,6 @@ public:
             unsigned_variables.erase(var.first);
 
             auto newly_satisfied_clauses = std::vector<int>();
-            auto newly_created_binary_clauses = std::vector<int>();
 
             for(auto clause_hash: variables[var.first].clauses) {
                 if( is_clause_satisfied(clause_hash, var.first, var.second) ) {
@@ -254,8 +229,23 @@ public:
                     #endif
 
                     if(formula[clause_hash].size() == 2) {
-                        newly_created_binary_clauses.push_back(clause_hash);
                         new_binary_clauses.insert(clause_hash);
+                    }
+
+                    if(formula[clause_hash].size() == 1) {
+                        auto literal = *formula[clause_hash].begin();
+                        if(variables[abs(literal)].value == -1) {
+                            bool value = literal > 0;
+                            variables[abs(literal)].value = value;
+                            assigned_variables.push(std::make_pair(abs(literal), value));
+                        } else {
+                            auto value = variables[abs(literal)].value;
+                            if((literal > 0 && value ) || (literal < 0 && !value)) {
+                                newly_satisfied_clauses.push_back(clause_hash);
+                            } else {
+                                return false;
+                            }
+                        }
                     }
                 }
             }
@@ -263,23 +253,8 @@ public:
             for(auto i: newly_satisfied_clauses) {
                 prepare_satisfied_clause(i);
             }
-            for(auto i: newly_created_binary_clauses) {
-                prepare_new_binary_clause(i);
-            }
-
-            if(var.second) { // positive value, positive -> satisfied, negative -> unit;
-                prepare_binary_satisfied_clauses(var.first);
-                if(!prepare_birary_reducted_clauses(-1*var.first, assigned_variables)) {
-                    return false;
-                }
-            } else {
-                prepare_binary_satisfied_clauses(-1*var.first);
-                if(!prepare_birary_reducted_clauses(var.first, assigned_variables)) {
-                    return false;
-                }
-            }
-
         }
+
 
         return true;
     }

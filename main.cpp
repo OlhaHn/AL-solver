@@ -272,13 +272,12 @@ int main() {
     auto formula = std::unordered_map<int, std::unordered_set<int>>();
     auto variables = std::unordered_map<int, Variable>();
     auto unasigned_variables = std::unordered_set<int>();
-    auto binary_clauses = std::unordered_map<int, PairsSet>();
     auto literal_wieghts = std::unordered_map<int, double>();
     auto literal_count = std::unordered_map<int, int>(); 
     int number_of_clauses = 0;
 
-    read_input(formula, variables, unasigned_variables, binary_clauses, number_of_clauses, literal_wieghts, literal_count);
-    auto sat_instance = SATclass(unasigned_variables, variables, formula, binary_clauses, number_of_clauses, literal_wieghts, literal_count);
+    read_input(formula, variables, unasigned_variables, number_of_clauses, literal_wieghts, literal_count);
+    auto sat_instance = SATclass(unasigned_variables, variables, formula, number_of_clauses, literal_wieghts, literal_count);
 
     #if DOUBLE_LOOKAHEAD == 1
         sat_instance.trigger = 65;

@@ -1,5 +1,5 @@
 #!/bin/bash
-FILES=./input/test/rand_4_SAT/critical_10.7_var_clause_ratio9/*
+FILES=./input/test_one_folder/*
 FILE=output
 
 if [ -f "$FILE" ]; then

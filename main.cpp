@@ -288,8 +288,10 @@ int main() {
         sat_instance.trigger = 0;
     #endif
 
+    auto start = std::clock();
     auto result = dpll(sat_instance);
-    std::cout << "Result: " << result << '\n';
+    auto duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+    std::cout << "Result: " << result << " " << "duration " << duration  << '\n';
 
     return 0;
 }

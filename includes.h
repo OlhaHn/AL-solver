@@ -8,6 +8,8 @@
 #include <sstream>
 #include <stack>
 #include <boost/functional/hash.hpp>
+#include <cstdio>
+#include <ctime>
 
 using PairsSet = std::unordered_set<std::pair<int, int>, boost::hash< std::pair<int, int> > >;
 

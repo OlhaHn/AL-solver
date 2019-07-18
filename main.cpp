@@ -160,11 +160,7 @@ bool get_direction_heuristic_val(SATclass& instance, int decision_variable) {
 void prepare_binary_clauses(SATclass& instance, SATclass& after_propagation, int variable, bool value) {
     int literal = value ? -1*variable : variable;
     auto& clauses = instance.variables[variable].clauses;
-    /*std::cout << "before" << '\n';
-    for(auto i: clauses) {
-        std::cout << i << " ";
-    }
-    std::cout << '\n';*/
+
     for(auto var: after_propagation.implicated_variables) {
         auto next_literal = after_propagation.variables[var].value ? var : -1*var;
         instance.formula[instance.number_of_all_clauses] = {literal, next_literal};
@@ -172,12 +168,6 @@ void prepare_binary_clauses(SATclass& instance, SATclass& after_propagation, int
         instance.variables[var].clauses.insert(instance.number_of_all_clauses);
         instance.number_of_all_clauses += 1;
     }
-
-    /*std::cout << "after" << '\n';
-    for(auto i: clauses) {
-        std::cout << i << " ";
-    }
-    std::cout << '\n';*/
 }
 
 int look_ahead(SATclass& instance, int depth) {

@@ -64,7 +64,7 @@
 
 
 #ifndef LOCAL_LEARNING
-#define LOCAL_LEARNING 0
+#define LOCAL_LEARNING 1
 
 /*
     possible values:

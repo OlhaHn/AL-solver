@@ -216,9 +216,6 @@ public:
             auto var = assigned_variables.top();
             assigned_variables.pop();
             unsigned_variables.erase(var.first);
-            #if LOCAL_LEARNING == 1
-            implicated_variables.insert(var.first);
-            #endif
             auto newly_satisfied_clauses = std::vector<int>();
 
             for(auto clause_hash: variables[var.first].clauses) {
@@ -244,6 +241,11 @@ public:
                             bool value = literal > 0;
                             variables[abs(literal)].value = value;
                             assigned_variables.push(std::make_pair(abs(literal), value));
+                            #if LOCAL_LEARNING == 1
+                            if(var.first != variable) { // not direct implication
+                                implicated_variables.insert(abs(literal));
+                            }
+                            #endif
                         } else {
                             auto value = variables[abs(literal)].value;
                             if((literal > 0 && value ) || (literal < 0 && !value)) {

@@ -1,5 +1,5 @@
 #!/bin/bash
-FILES=./input/test_one_folder/*
+FILES=./input/jnh/*
 for f in $FILES
 do
   echo "$f"

@@ -13,6 +13,7 @@ public:
     std::unordered_map<int, int> literal_count;
     std::unordered_set<int> reducted_clauses; //reducted clauses after propagation
     std::unordered_set<int> new_binary_clauses;
+    std::unordered_set<int> implicated_variables;
     int number_of_all_clauses;
     int decision_level;
     double trigger;
@@ -205,6 +206,9 @@ public:
         auto assigned_variables = std::stack<std::pair<int, bool>>();
         reducted_clauses = {};
         new_binary_clauses = {};
+        #if LOCAL_LEARNING == 1
+            implicated_variables = {};
+        #endif
         assigned_variables.push(std::make_pair(variable, value));
         variables[variable].value = value;
         while(!assigned_variables.empty()) {
@@ -212,7 +216,9 @@ public:
             auto var = assigned_variables.top();
             assigned_variables.pop();
             unsigned_variables.erase(var.first);
-
+            #if LOCAL_LEARNING == 1
+            implicated_variables.insert(var.first);
+            #endif
             auto newly_satisfied_clauses = std::vector<int>();
 
             for(auto clause_hash: variables[var.first].clauses) {
@@ -255,6 +261,9 @@ public:
             }
         }
 
+        #if LOCAL_LEARNING == 1
+        implicated_variables.erase(variable);
+        #endif
 
         return true;
     }

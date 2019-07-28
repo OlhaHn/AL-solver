@@ -13,7 +13,7 @@ else
     done
 fi
 echo "" >> $FILE
-echo -n "v10000;" >> $FILE
+echo -n "v000001;" >> $FILE
 for f in $FILES
 do
   #echo "$f"

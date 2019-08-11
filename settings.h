@@ -4,7 +4,7 @@
 #endif //SETTINGS_H
 
 #ifndef DIFF_HEURISTIC
-#define DIFF_HEURISTIC 0
+#define DIFF_HEURISTIC 3
 
 /*
     Possible values: 
@@ -17,7 +17,7 @@
 #endif // DIFF_HEURISTIC
 
 #ifndef DIRECTION_HEURISTI
-#define DIRECTION_HEURISTIC 0
+#define DIRECTION_HEURISTIC 1
 
 /*
     Possible values: 
@@ -39,7 +39,7 @@
 #endif // PRESELECT_HEURISTIC
 
 #ifndef AUTARKY_REASONING
-#define AUTARKY_REASONING 0
+#define AUTARKY_REASONING 1
 
 /*
     Possible values: 
@@ -64,7 +64,7 @@
 
 
 #ifndef LOCAL_LEARNING
-#define LOCAL_LEARNING 1
+#define LOCAL_LEARNING 0
 
 /*
     possible values:
